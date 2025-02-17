@@ -27,6 +27,9 @@ final class PinterestFeed
     /** @var string */
     private const OPTION_ITEM_COUNT = 'pinterest_item_count';
 
+    /** @var string */
+    private const OPTION_TITLE = 'pinterest_feed_title';
+
     /** @var int */
     private const DEFAULT_ITEM_COUNT = 9;
 
@@ -59,6 +62,15 @@ final class PinterestFeed
      */
     public function registerSettings(): void
     {
+        register_setting(
+            'pinterest_feed_settings',
+            self::OPTION_TITLE,
+            [
+                'type' => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ]
+        );
+
         register_setting(
             'pinterest_feed_settings',
             self::OPTION_USERNAME,
@@ -109,6 +121,14 @@ final class PinterestFeed
                 do_settings_sections('pinterest_feed_settings');
                 ?>
                 <table class="form-table">
+                    <tr>
+                        <th scope="row">Feed Title</th>
+                        <td>
+                            <input type="text" name="<?php echo esc_attr(self::OPTION_TITLE); ?>"
+                                value="<?php echo esc_attr(get_option(self::OPTION_TITLE)); ?>">
+                            <p class="description">Optional title to display above the feed (e.g., "Know Your Style")</p>
+                        </td>
+                    </tr>
                     <tr>
                         <th scope="row">Pinterest Username</th>
                         <td>
@@ -214,7 +234,18 @@ final class PinterestFeed
             return '<p>No Pinterest images found.</p>';
         }
 
-        $output = '<ul class="pinterest-feed">';
+        $output = '';
+
+        // Add title if set
+        $title = get_option(self::OPTION_TITLE);
+        if (!empty($title)) {
+            $output .= sprintf(
+                '<h6 class="text-center">%s</h6><hr>',
+                esc_html($title)
+            );
+        }
+
+        $output .= '<ul class="pinterest-feed">';
 
         foreach ($items as $item) {
             $output .= sprintf(
@@ -240,6 +271,17 @@ final class PinterestFeed
     {
         return '
         <style>
+            h6.text-center {
+                text-align: center;
+                font-size: 1.1em;
+                margin: 0 0 0.5em 0;
+                font-weight: 600;
+            }
+            hr {
+                border: 0;
+                border-top: 1px solid #ddd;
+                margin: 1em 0;
+            }
             ul.pinterest-feed {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
